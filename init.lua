@@ -10,5 +10,8 @@ storagetest.devices = {}
 -- Network
 dofile(modpath.."/network.lua")
 
+-- Items
+dofile(modpath.."/items.lua")
+
 -- Nodes
 dofile(modpath.."/nodes.lua")

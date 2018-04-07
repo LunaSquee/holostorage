@@ -171,13 +171,6 @@ minetest.register_chatcommand("storagectl", {
 	end
 })
 
-local function concatinate(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
-    end
-    return t1
-end
-
 function storagetest.network.register_abm_controller(name)
 	minetest.register_abm({
 		nodenames = {name},
