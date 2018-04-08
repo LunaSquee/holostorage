@@ -1,4 +1,4 @@
--- Storagetest cabling
+-- holostorage cabling
 
 local function get_formspec(title, filter)
 	local fl = "Blacklist"
@@ -65,22 +65,22 @@ local function flip_filter(pos, form, fields, player)
 	end
 end
 
-minetest.register_node("storagetest:import_bus", {
+minetest.register_node("holostorage:import_bus", {
 	description = "Import Bus",
 	tiles = {
-		"storagetest_machine_block.png", "storagetest_machine_block.png", "storagetest_machine_block.png",
-		"storagetest_machine_block.png", "storagetest_machine_block.png", "storagetest_import.png",
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_machine_block.png",
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_import.png",
 	},
 	paramtype2 = "facedir",
 	is_ground_content = false,
 	groups = {
-		storagetest_distributor = 1,
-		storagetest_device = 1,
+		holostorage_distributor = 1,
+		holostorage_device = 1,
 		cracky = 2,
 		oddly_breakable_by_hand = 2
 	},
 	on_construct = function (pos)
-		storagetest.network.clear_networks(pos)
+		holostorage.network.clear_networks(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec", get_formspec("Import Bus", 0))
 
@@ -89,14 +89,14 @@ minetest.register_node("storagetest:import_bus", {
 
 		meta:set_int("filter", 0)
 	end,
-	on_destruct = storagetest.network.clear_networks,
+	on_destruct = holostorage.network.clear_networks,
 	on_receive_fields = flip_filter,
-	storagetest_run = function (pos, _, controller)
+	holostorage_run = function (pos, _, controller)
 		local network = minetest.hash_node_position(controller)
 		local node    = minetest.get_node(pos)
 		local meta    = minetest.get_meta(pos)
 		local inv     = meta:get_inventory()
-		local front   = storagetest.front(pos, node.param2)
+		local front   = holostorage.front(pos, node.param2)
 		
 		local front_node = minetest.get_node(front)
 		if front_node.name ~= "air" then
@@ -121,7 +121,7 @@ minetest.register_node("storagetest:import_bus", {
 						end
 
 						if can_take then
-							local success, outst = storagetest.network.insert_item(network, copystack)
+							local success, outst = holostorage.network.insert_item(network, copystack)
 							if success then
 								stack:set_count(stack:get_count() - 1)
 								front_inv:set_stack("main", index, stack)
@@ -138,35 +138,35 @@ minetest.register_node("storagetest:import_bus", {
 	allow_metadata_inventory_put  = inventory_ghost_put
 })
 
-minetest.register_node("storagetest:export_bus", {
+minetest.register_node("holostorage:export_bus", {
 	description = "Export Bus",
 	tiles = {
-		"storagetest_machine_block.png", "storagetest_machine_block.png", "storagetest_machine_block.png",
-		"storagetest_machine_block.png", "storagetest_machine_block.png", "storagetest_export.png",
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_machine_block.png",
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_export.png",
 	},
 	paramtype2 = "facedir",
 	is_ground_content = false,
 	groups = {
-		storagetest_distributor = 1,
-		storagetest_device = 1,
+		holostorage_distributor = 1,
+		holostorage_device = 1,
 		cracky = 2,
 		oddly_breakable_by_hand = 2
 	},
 	on_construct = function (pos)
-		storagetest.network.clear_networks(pos)
+		holostorage.network.clear_networks(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec", get_formspec("Export Bus"))
 
 		local inv  = meta:get_inventory()
 		inv:set_size("filter", 8)
 	end,
-	on_destruct = storagetest.network.clear_networks,
-	storagetest_run = function (pos, _, controller)
+	on_destruct = holostorage.network.clear_networks,
+	holostorage_run = function (pos, _, controller)
 		local network = minetest.hash_node_position(controller)
 		local node    = minetest.get_node(pos)
 		local meta    = minetest.get_meta(pos)
 		local inv     = meta:get_inventory()
-		local front   = storagetest.front(pos, node.param2)
+		local front   = holostorage.front(pos, node.param2)
 		
 		local front_node = minetest.get_node(front)
 		if front_node.name ~= "air" then
@@ -174,7 +174,7 @@ minetest.register_node("storagetest:export_bus", {
 			local front_inv   = front_meta:get_inventory()
 			local front_def   = minetest.registered_nodes[front_node.name]
 			if front_inv:get_list("main") then
-				local items = storagetest.network.get_storage_inventories(network)
+				local items = holostorage.network.get_storage_inventories(network)
 				for index, stack in pairs(items) do
 					if not stack:is_empty() then
 						local can_take = false
@@ -189,7 +189,7 @@ minetest.register_node("storagetest:export_bus", {
 						end
 
 						if can_take then
-							local success, gotten = storagetest.network.take_item(network, stack)
+							local success, gotten = holostorage.network.take_item(network, stack)
 							if success then
 								front_inv:add_item("main", gotten)
 								break -- Don't take more than one per cycle
@@ -204,5 +204,5 @@ minetest.register_node("storagetest:export_bus", {
 	allow_metadata_inventory_put  = inventory_ghost_put
 })
 
-storagetest.devices["storagetest:import_bus"] = true
-storagetest.devices["storagetest:export_bus"] = true
+holostorage.devices["holostorage:import_bus"] = true
+holostorage.devices["holostorage:export_bus"] = true

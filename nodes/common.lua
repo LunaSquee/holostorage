@@ -1,8 +1,8 @@
--- Storagetest commons
+-- holostorage commons
 
-storagetest.helpers = {}
+holostorage.helpers = {}
 
-function storagetest.helpers.swap_node(pos, noded)
+function holostorage.helpers.swap_node(pos, noded)
 	local node = minetest.get_node(pos)
 	if node.name == noded.name then
 		return
@@ -10,7 +10,7 @@ function storagetest.helpers.swap_node(pos, noded)
 	minetest.swap_node(pos, noded)
 end
 
-function storagetest.helpers.grid_refresh(pos, n, controller)
+function holostorage.helpers.grid_refresh(pos, n, controller)
 	local node    = minetest.get_node(pos)
 	local meta    = minetest.get_meta(pos)
 	local nodedef = minetest.registered_nodes[node.name]
@@ -23,13 +23,13 @@ function storagetest.helpers.grid_refresh(pos, n, controller)
 		minetest.get_node_timer(pos):start(0.02)
 	end
 
-	if nodedef.storagetest_enabled_name then
-		node.name = nodedef.storagetest_enabled_name
-		storagetest.helpers.swap_node(pos, node)
+	if nodedef.holostorage_enabled_name then
+		node.name = nodedef.holostorage_enabled_name
+		holostorage.helpers.swap_node(pos, node)
 	end
 end
 
-function storagetest.front(pos, fd)
+function holostorage.front(pos, fd)
 	local front = minetest.facedir_to_dir(fd)
 	front.x = front.x * -1 + pos.x
 	front.y = front.y * -1 + pos.y

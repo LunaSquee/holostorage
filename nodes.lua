@@ -1,23 +1,23 @@
--- Storagetest nodes
+-- holostorage nodes
 
 -- Common registrations
-dofile(storagetest.modpath.."/nodes/common.lua")
+dofile(holostorage.modpath.."/nodes/common.lua")
 
 -- Controller
-dofile(storagetest.modpath.."/nodes/controller.lua")
+dofile(holostorage.modpath.."/nodes/controller.lua")
 
 -- Cabling
-dofile(storagetest.modpath.."/nodes/cable.lua")
+dofile(holostorage.modpath.."/nodes/cable.lua")
 
 -- Disk drives
-dofile(storagetest.modpath.."/nodes/disk_drive.lua")
+dofile(holostorage.modpath.."/nodes/disk_drive.lua")
 
 -- Grids
-dofile(storagetest.modpath.."/nodes/grid.lua")
+dofile(holostorage.modpath.."/nodes/grid.lua")
 
 -- Buses
-dofile(storagetest.modpath.."/nodes/bus.lua")
+dofile(holostorage.modpath.."/nodes/bus.lua")
 
 -- Start the network
-storagetest.network.register_abm_controller("storagetest:controller_active")
-storagetest.network.register_abm_nodes()
+holostorage.network.register_abm_controller("holostorage:controller_active")
+holostorage.network.register_abm_nodes()

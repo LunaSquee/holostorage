@@ -33,7 +33,7 @@ local function timer(pos, elapsed)
 	local count  = count_inv(inv)
 	local cnname = minetest.registered_nodes[node.name]["_basename"]
 	node.name = cnname..count
-	storagetest.helpers.swap_node(pos, node)
+	holostorage.helpers.swap_node(pos, node)
 
 	return refresh
 end
@@ -43,7 +43,7 @@ local function allow_metadata_inventory_put (pos, listname, index, stack, player
 		return 0
 	end
 
-	if not storagetest.disks.is_valid_disk(stack) then
+	if not holostorage.disks.is_valid_disk(stack) then
 		return 0
 	end
 
@@ -68,13 +68,13 @@ local function sort_by_stack_name( ... )
 	-- body
 end
 
-function storagetest.stack_list(pos)
-	local invs = storagetest.get_all_inventories(pos)
+function holostorage.stack_list(pos)
+	local invs = holostorage.get_all_inventories(pos)
 	if not invs then return {} end
 	local tabl = {}
 
 	for _,diskptr in pairs(invs) do
-		local invref = storagetest.disks.memcache[diskptr]
+		local invref = holostorage.disks.memcache[diskptr]
 		if invref then
 			local stacks = invref:get_list("main")
 			for _,stack in pairs(stacks) do
@@ -89,15 +89,15 @@ function storagetest.stack_list(pos)
 	return tabl
 end
 
-function storagetest.insert_stack(pos, stack)
-	local invs = storagetest.get_all_inventories(pos)
+function holostorage.insert_stack(pos, stack)
+	local invs = holostorage.get_all_inventories(pos)
 	if not invs then return {} end
 	local tabl = {}
 	local success = false
 	local leftover
 
 	for _,diskptr in pairs(invs) do
-		local invref = storagetest.disks.memcache[diskptr]
+		local invref = holostorage.disks.memcache[diskptr]
 		if invref then
 			if invref:room_for_item("main", stack) then
 				leftover = invref:add_item("main", stack)
@@ -110,15 +110,15 @@ function storagetest.insert_stack(pos, stack)
 	return success, leftover
 end
 
-function storagetest.take_stack(pos, stack)
-	local invs = storagetest.get_all_inventories(pos)
+function holostorage.take_stack(pos, stack)
+	local invs = holostorage.get_all_inventories(pos)
 	if not invs then return {} end
 	local tabl = {}
 	local stack_ret
 	local success = false
 
 	for _,diskptr in pairs(invs) do
-		local invref = storagetest.disks.memcache[diskptr]
+		local invref = holostorage.disks.memcache[diskptr]
 		if invref then
 			local list = invref:get_list("main")
 			for i, stacki in pairs(list) do
@@ -142,7 +142,7 @@ function storagetest.take_stack(pos, stack)
 	return success, stack_ret
 end
 
-function storagetest.get_all_inventories(pos)
+function holostorage.get_all_inventories(pos)
 	local node = minetest.get_node(pos)
 	if minetest.get_item_group(node.name, "disk_drive") == 0 then return nil end
 	local meta = minetest.get_meta(pos)
@@ -166,26 +166,26 @@ end
 local function register_disk_drive(index)
 	local groups = {
 		cracky = 1,
-		storagetest_distributor = 1,
-		storagetest_device = 1,
-		storagetest_storage = 1,
+		holostorage_distributor = 1,
+		holostorage_device = 1,
+		holostorage_storage = 1,
 		disk_drive = 1,
 	}
 
 	local driveoverlay = ""
 	if index ~= 0 then
 		groups["not_in_creative_inventory"] = 1
-		driveoverlay = "^storagetest_drive_section"..index..".png"
+		driveoverlay = "^holostorage_drive_section"..index..".png"
 	end
 
-	minetest.register_node("storagetest:disk_drive"..index, {
+	minetest.register_node("holostorage:disk_drive"..index, {
 		description = "Disk Drive",
 		tiles = {
-			"storagetest_drive_side.png", "storagetest_drive_side.png", "storagetest_drive_side.png",
-			"storagetest_drive_side.png", "storagetest_drive_side.png", "storagetest_drive.png"..driveoverlay, 
+			"holostorage_drive_side.png", "holostorage_drive_side.png", "holostorage_drive_side.png",
+			"holostorage_drive_side.png", "holostorage_drive_side.png", "holostorage_drive.png"..driveoverlay, 
 		},
-		drop = "storagetest:disk_drive0",
-		_basename = "storagetest:disk_drive",
+		drop = "holostorage:disk_drive0",
+		_basename = "holostorage:disk_drive",
 		paramtype2 = "facedir",
 		on_timer = timer,
 		groups = groups,
@@ -194,9 +194,9 @@ local function register_disk_drive(index)
 			meta:set_string("formspec", get_formspec())
 			local inv = meta:get_inventory()
 			inv:set_size("main", 6)
-			storagetest.network.clear_networks(pos)
+			holostorage.network.clear_networks(pos)
 		end,
-		on_destruct = storagetest.network.clear_networks,
+		on_destruct = holostorage.network.clear_networks,
 
 		allow_metadata_inventory_put = allow_metadata_inventory_put,
 		allow_metadata_inventory_take = allow_metadata_inventory_take,
@@ -206,7 +206,7 @@ local function register_disk_drive(index)
 			minetest.get_node_timer(pos):start(0.02)
 		end,
 		on_metadata_inventory_put = function(pos, listname, index, stack, player)
-			stack = storagetest.disks.ensure_disk_inventory(stack, minetest.pos_to_string(pos))
+			stack = holostorage.disks.ensure_disk_inventory(stack, minetest.pos_to_string(pos))
 
 			local meta  = minetest.get_meta(pos)
 			local inv   = meta:get_inventory()
@@ -220,7 +220,7 @@ local function register_disk_drive(index)
 		end,
 	})
 
-	storagetest.devices["storagetest:disk_drive"..index] = true
+	holostorage.devices["holostorage:disk_drive"..index] = true
 end
 
 -- Register 6 variants of the disk drive.
@@ -232,7 +232,7 @@ end
 minetest.register_abm({
 	label = "Storage Disk Synchronization",
 	nodenames = {"group:disk_drive"},
-	neighbors = {"group:storagetest_distributor"},
+	neighbors = {"group:holostorage_distributor"},
 	interval = 1,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
@@ -244,9 +244,9 @@ minetest.register_abm({
 			local meta = stack:get_meta()
 			local tag  = meta:get_string("storage_tag")
 			if tag and tag ~= "" then
-				if not storagetest.disks.memcache[tag] then
+				if not holostorage.disks.memcache[tag] then
 					print("loading drive",tag)
-					storagetest.disks.load_disk_from_file(stack, tag)
+					holostorage.disks.load_disk_from_file(stack, tag)
 				end
 			end
 		end

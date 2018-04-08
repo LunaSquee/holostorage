@@ -1,4 +1,4 @@
-# Storagetest
+# Holostorage
 ![](screenshot.png)
 A solution to your hoarding addiction. In [Minetest](http://minetest.net).
 

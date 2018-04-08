@@ -1,11 +1,11 @@
--- Storagetest
+-- holostorage
 
-storagetest = rawget(_G, "storagetest") or {}
+holostorage = rawget(_G, "holostorage") or {}
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
-storagetest.modpath = modpath
+holostorage.modpath = modpath
 
-storagetest.devices = {}
+holostorage.devices = {}
 
 -- Network
 dofile(modpath.."/network.lua")

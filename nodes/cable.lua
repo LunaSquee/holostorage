@@ -1,9 +1,9 @@
--- Storagetest cabling
+-- holostorage cabling
 
-minetest.register_node("storagetest:cable", {
+minetest.register_node("holostorage:cable", {
 	description = "Storage Cable",
 	drawtype = "nodebox",
-	tiles = {"storagetest_cable.png"},
+	tiles = {"holostorage_cable.png"},
 	node_box = {
 		type = "connected",
 		fixed = {{-1/8, -1/8, -1/8, 1/8, 1/8, 1/8}},
@@ -30,18 +30,18 @@ minetest.register_node("storagetest:cable", {
 	connect_sides = { "top", "bottom", "front", "left", "back", "right" },
 	is_ground_content = false,
 	connects_to = {
-		"group:storagetest_controller",
-		"group:storagetest_distributor",
-		"group:storagetest_cable",
+		"group:holostorage_controller",
+		"group:holostorage_distributor",
+		"group:holostorage_cable",
 	},
 	groups = {
-		storagetest_distributor = 1,
-		storagetest_cable = 1,
+		holostorage_distributor = 1,
+		holostorage_cable = 1,
 		cracky = 2,
 		oddly_breakable_by_hand = 2
 	},
 	on_construct = function (pos)
-		storagetest.network.clear_networks(pos)
+		holostorage.network.clear_networks(pos)
 	end,
-	on_destruct = storagetest.network.clear_networks,
+	on_destruct = holostorage.network.clear_networks,
 })

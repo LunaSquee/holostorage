@@ -1,4 +1,4 @@
--- Storagetest items
+-- holostorage items
 
 -- Drives
-dofile(storagetest.modpath.."/items/storage_disk.lua")
+dofile(holostorage.modpath.."/items/storage_disk.lua")
