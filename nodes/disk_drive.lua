@@ -114,6 +114,7 @@ function storagetest.take_stack(pos, stack)
 	local invs = storagetest.get_all_inventories(pos)
 	if not invs then return {} end
 	local tabl = {}
+	local stack_ret
 	local success = false
 
 	for _,diskptr in pairs(invs) do
@@ -121,9 +122,15 @@ function storagetest.take_stack(pos, stack)
 		if invref then
 			local list = invref:get_list("main")
 			for i, stacki in pairs(list) do
-				if stacki:get_name() == stack:get_name() and stacki:get_count() == stack:get_count() and stacki:get_wear() == stack:get_wear() then
+				if stacki:get_name() == stack:get_name() and stacki:get_wear() == stack:get_wear() then
 					success = true
-					stacki:clear()
+					if stack:get_count() >= stacki:get_count() then
+						stack:set_count(stacki:get_count())
+						stacki:clear()
+					else
+						stacki:set_count(stacki:get_count() - stack:get_count())
+					end
+					stack_ret = stack
 					list[i] = stacki
 					break
 				end
@@ -132,7 +139,7 @@ function storagetest.take_stack(pos, stack)
 		end
 	end
 
-	return success
+	return success, stack_ret
 end
 
 function storagetest.get_all_inventories(pos)

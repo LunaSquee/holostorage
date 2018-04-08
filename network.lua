@@ -447,9 +447,14 @@ function storagetest.network.take_item(network_id, stack)
 	local storage_nodes = storagetest.network.get_storage_devices(network_id)
 
 	for _,pos in pairs(storage_nodes) do
-		local success = storagetest.take_stack(pos, stack)
-		if success then
-			return success
+		local success, stacki = storagetest.take_stack(pos, stack)
+		if success and stacki then
+			if stacki:get_count() == stack:get_count() then
+				return success, stacki
+			else
+				stack:set_count(stack:get_count() - stacki:get_count())
+				return storagetest.network.take_item(network_id, stack)
+			end
 		end
 	end
 

@@ -54,9 +54,9 @@ function storagetest.grid.get_formspec(scroll_lvl, pages, craft_inv)
 	if craft_inv then
 		title = "Crafting Grid"
 		height = 3
-		craft = "list[current_player;craft;1.5,4;3,3;]"..
-				"image[4.5,5;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
-				"list[current_player;craftpreview;5.5,5;1,1;]"
+		craft = "list[current_player;craft;1.5,3.8;3,3;]"..
+				"image[4.5,4.8;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
+				"list[current_player;craftpreview;5.5,4.8;1,1;]"
 	end
 
 	local scroll = ""
