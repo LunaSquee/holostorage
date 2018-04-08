@@ -14,7 +14,6 @@ dofile(storagetest.modpath.."/nodes/disk_drive.lua")
 
 -- Grids
 dofile(storagetest.modpath.."/nodes/grid.lua")
-dofile(storagetest.modpath.."/nodes/crafting_grid.lua")
 
 -- Start the network
 storagetest.network.register_abm_controller("storagetest:controller_active")

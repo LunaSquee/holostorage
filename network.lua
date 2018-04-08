@@ -236,7 +236,6 @@ function storagetest.network.register_abm_controller(name)
 			end
 
 			dv_nodes, st_nodes = get_network(pos, ntwks)
-			local network_id = minetest.hash_node_position(pos)
 
 			-- Run all the nodes
 			local function run_nodes(list)
@@ -248,7 +247,7 @@ function storagetest.network.register_abm_controller(name)
 						nodedef = minetest.registered_nodes[node2.name]
 					end
 					if nodedef and nodedef.storagetest_run then
-						nodedef.storagetest_run(pos2, node2, network_id)
+						nodedef.storagetest_run(pos2, node2, pos)
 					end
 				end
 			end
@@ -398,4 +397,59 @@ function storagetest.network.register_abm_nodes()
 			end
 		end,
 	})
+end
+
+-----------------------
+-- Network Functions --
+-----------------------
+
+function storagetest.network.get_storage_devices(network_id)
+	local network = storagetest.network.networks[network_id]
+	if not network or not network.st_nodes then return {} end
+	return network.st_nodes
+end
+
+function concat(t1,t2)
+    for i=1,#t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
+function storagetest.network.get_storage_inventories(network_id)
+	local storage_nodes = storagetest.network.get_storage_devices(network_id)
+	local items         = {}
+
+	for _,pos in pairs(storage_nodes) do
+		local stacks = storagetest.stack_list(pos)
+		items = concat(items, stacks)
+	end
+
+	return items
+end
+
+function storagetest.network.insert_item(network_id, stack)
+	local storage_nodes = storagetest.network.get_storage_devices(network_id)
+
+	for _,pos in pairs(storage_nodes) do
+		local success, leftover = storagetest.insert_stack(pos, stack)
+		if success then
+			return success, leftover
+		end
+	end
+
+	return nil
+end
+
+function storagetest.network.take_item(network_id, stack)
+	local storage_nodes = storagetest.network.get_storage_devices(network_id)
+
+	for _,pos in pairs(storage_nodes) do
+		local success = storagetest.take_stack(pos, stack)
+		if success then
+			return success
+		end
+	end
+
+	return nil
 end

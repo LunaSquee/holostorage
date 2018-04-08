@@ -43,7 +43,7 @@ local function allow_metadata_inventory_put (pos, listname, index, stack, player
 		return 0
 	end
 
-	if minetest.get_item_group(stack:get_name(), "storagetest_disk") == 0 then
+	if not storagetest.disks.is_valid_disk(stack) then
 		return 0
 	end
 
@@ -64,18 +64,92 @@ local function allow_metadata_inventory_take (pos, listname, index, stack, playe
 	return stack:get_count()
 end
 
+local function sort_by_stack_name( ... )
+	-- body
+end
+
+function storagetest.stack_list(pos)
+	local invs = storagetest.get_all_inventories(pos)
+	if not invs then return {} end
+	local tabl = {}
+
+	for _,diskptr in pairs(invs) do
+		local invref = storagetest.disks.memcache[diskptr]
+		if invref then
+			local stacks = invref:get_list("main")
+			for _,stack in pairs(stacks) do
+				if not stack:is_empty() then
+					table.insert(tabl, stack)
+				end
+			end
+		end
+	end
+
+	--table.sort( tabl, sort_by_stack_name )
+	return tabl
+end
+
+function storagetest.insert_stack(pos, stack)
+	local invs = storagetest.get_all_inventories(pos)
+	if not invs then return {} end
+	local tabl = {}
+	local success = false
+	local leftover
+
+	for _,diskptr in pairs(invs) do
+		local invref = storagetest.disks.memcache[diskptr]
+		if invref then
+			if invref:room_for_item("main", stack) then
+				leftover = invref:add_item("main", stack)
+				success = true
+				break
+			end
+		end
+	end
+
+	return success, leftover
+end
+
+function storagetest.take_stack(pos, stack)
+	local invs = storagetest.get_all_inventories(pos)
+	if not invs then return {} end
+	local tabl = {}
+	local success = false
+
+	for _,diskptr in pairs(invs) do
+		local invref = storagetest.disks.memcache[diskptr]
+		if invref then
+			local list = invref:get_list("main")
+			for i, stacki in pairs(list) do
+				if stacki:get_name() == stack:get_name() and stacki:get_count() == stack:get_count() and stacki:get_wear() == stack:get_wear() then
+					success = true
+					stacki:clear()
+					list[i] = stacki
+					break
+				end
+			end
+			invref:set_list("main", list)
+		end
+	end
+
+	return success
+end
+
 function storagetest.get_all_inventories(pos)
 	local node = minetest.get_node(pos)
-	if minetest.get_item_group(node.name, "storagetest_storage") == 0 then return nil end
+	if minetest.get_item_group(node.name, "disk_drive") == 0 then return nil end
 	local meta = minetest.get_meta(pos)
 	local inv  = meta:get_inventory()
 	
-	local drives      = inv:get_list("meta")
+	local drives      = inv:get_list("main")
 	local inventories = {}
 	for i, v in pairs(drives) do
 		if not v:is_empty() then
-			local inv1, stack = storagetest.disks.get_stack_inventory(v)
-			inventories[i] = {inventory = inv1, stack = stack}
+			local meta = v:get_meta()
+			local tag  = meta:get_string("storage_tag")
+			if tag and tag ~= "" then
+				inventories[#inventories + 1] = tag
+			end
 		end
 	end
 
@@ -88,6 +162,7 @@ local function register_disk_drive(index)
 		storagetest_distributor = 1,
 		storagetest_device = 1,
 		storagetest_storage = 1,
+		disk_drive = 1,
 	}
 
 	local driveoverlay = ""
@@ -123,7 +198,14 @@ local function register_disk_drive(index)
 		on_metadata_inventory_move = function(pos)
 			minetest.get_node_timer(pos):start(0.02)
 		end,
-		on_metadata_inventory_put = function(pos)
+		on_metadata_inventory_put = function(pos, listname, index, stack, player)
+			stack = storagetest.disks.ensure_disk_inventory(stack, minetest.pos_to_string(pos))
+
+			local meta  = minetest.get_meta(pos)
+			local inv   = meta:get_inventory()
+
+			inv:set_stack(listname, index, stack)
+
 			minetest.get_node_timer(pos):start(0.02)
 		end,
 		on_metadata_inventory_take = function(pos)
@@ -138,3 +220,28 @@ end
 for i = 0, 6 do
 	register_disk_drive(i)
 end
+
+-- Create ABM for syncing disks
+minetest.register_abm({
+	label = "Storage Disk Synchronization",
+	nodenames = {"group:disk_drive"},
+	neighbors = {"group:storagetest_distributor"},
+	interval = 5,
+	chance = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local meta = minetest.get_meta(pos)
+		local inv  = meta:get_inventory()
+
+		local disks = inv:get_list("main")
+		for _,stack in pairs(disks) do
+			local meta = stack:get_meta()
+			local tag  = meta:get_string("storage_tag")
+			if tag and tag ~= "" then
+				if not storagetest.disks.memcache[tag] then
+					print("loading drive",tag)
+					storagetest.disks.load_disk_from_file(stack, tag)
+				end
+			end
+		end
+	end
+})

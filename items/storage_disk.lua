@@ -1,6 +1,7 @@
 -- Storage disks
 
 storagetest.disks = {}
+storagetest.disks.memcache = {}
 
 local function inv_to_table(inv)
 	local t = {}
@@ -24,12 +25,6 @@ local function table_to_inv(inv, t)
 	end
 end
 
-local function save_inv_itemstack(inv, stack)
-	local meta = stack:get_meta()
-	meta:set_string("storagetest_inventory", minetest.serialize(inv_to_table(inv)))
-	return stack
-end
-
 function storagetest.disks.register_disk(index, desc, capacity)
 	local mod = minetest.get_current_modname()
 	minetest.register_craftitem(mod..":storage_disk"..index, {
@@ -40,11 +35,80 @@ function storagetest.disks.register_disk(index, desc, capacity)
 		storagetest_name = "disk"..index,
 		stack_max = 1,
 		on_secondary_use = function (itemstack, user, pointed_thing)
-			local inv, stack = storagetest.disks.add_stack(itemstack, ItemStack("default:cobble 99"))
-			if not inv then print("full!"); return itemstack end
 			return stack
 		end
 	})
+end
+
+local function create_invref(ptr, capacity)
+	local inv = minetest.create_detached_inventory(ptr, {})
+	inv:set_size("main", capacity)
+	return inv
+end
+
+function storagetest.disks.ensure_disk_inventory(stack, pstr)
+	local meta = stack:get_meta()
+	local tag  = meta:get_string("storage_tag")
+	local cap  = minetest.registered_items[stack:get_name()].storagetest_capacity
+	
+	if not tag or tag == "" then
+		local rnd = PseudoRandom(os.clock())
+		local rndint = rnd.next(rnd)
+		local diskid = "d"..pstr.."-"..rndint
+		meta:set_string("storage_tag", diskid)
+		storagetest.disks.memcache[diskid] = create_invref(diskid, cap)
+	end
+
+	return stack
+end
+
+function storagetest.disks.load_disk_from_file(stack, diskptr)
+	local world     = minetest.get_worldpath()
+	local directory = world.."/storagetest"
+	local cap       = minetest.registered_items[stack:get_name()].storagetest_capacity
+	local inv       = create_invref(diskptr, cap)
+	minetest.mkdir(directory)
+
+	local filetag = minetest.sha1(diskptr)..".invref"
+	local file = io.open(directory.."/"..filetag)
+	
+	if not file then
+		storagetest.disks.memcache[diskptr] = inv
+		return diskptr
+	end
+
+	local str = ""
+	for line in file:lines() do
+		str = str..line
+	end
+
+	file:close()
+
+	table_to_inv(inv, minetest.deserialize(str))
+	storagetest.disks.memcache[diskptr] = inv
+	return diskptr
+end
+
+function storagetest.disks.save_disk_to_file(diskptr)
+	if not storagetest.disks.memcache[diskptr] then return nil end
+
+	local world     = minetest.get_worldpath()
+	local directory = world.."/storagetest"
+	local filetag   = minetest.sha1(diskptr)..".invref"
+
+	minetest.mkdir(directory)
+
+	local inv  = storagetest.disks.memcache[diskptr]
+	local data = minetest.serialize(inv_to_table(inv))
+
+	minetest.safe_file_write(directory.."/"..filetag, data)
+	return diskptr
+end
+
+function storagetest.disks.save_disks_to_file()
+	for diskptr in pairs(storagetest.disks.memcache) do
+		storagetest.disks.save_disk_to_file(diskptr)
+	end
 end
 
 -- Make sure stack is disk
@@ -53,78 +117,10 @@ function storagetest.disks.is_valid_disk(stack)
 	return minetest.get_item_group(stack_name, "storagetest_disk") > 0
 end
 
-function storagetest.disks.get_stack_inventory(stack)
-	if not storagetest.disks.is_valid_disk(stack) then return nil end
-	local stack_name = stack:get_name()
-	local meta       = stack:get_meta()
-	local name       = minetest.registered_items[stack_name].storagetest_name
-	local capacity   = minetest.registered_items[stack_name].storagetest_capacity
-
-	local inv = minetest.create_detached_inventory(name, {
-
-	})
-	inv:set_size("main", capacity)
-	local invmetastring = meta:get_string("storagetest_inventory")
-
-	if invmetastring ~= "" then
-		table_to_inv(inv, minetest.deserialize(invmetastring))
-		save_inv_itemstack(inv, stack)
-	end
-
-	return inv, stack
-end
-
-function storagetest.disks.save_stack_inventory(inv, stack)
-	if not storagetest.disks.is_valid_disk(stack) then return nil end
-	stack = save_inv_itemstack(inv, stack)
-
-	local meta     = stack:get_meta()
-	local capacity = minetest.registered_items[stack:get_name()].storagetest_capacity
-	local desc     = minetest.registered_items[stack:get_name()].description
-	meta:set_string("description", desc.."\nContains "..storagetest.disks.get_stack_count(nil, inv).."/"..capacity)
-
-	return inv, stack
-end
-
-function storagetest.disks.get_stack_count(stack, invn)
-	local inv = invn or storagetest.disks.get_stack_inventory(stack)
-	if not inv then return 0 end
-	
-	local count = 0
-	for _,v in pairs(inv:get_list("main")) do
-		if not v:is_empty() then
-			count = count + 1
-		end
-	end
-
-	return count
-end
-
-function storagetest.disks.add_stack(stack, item)
-	local inv = storagetest.disks.get_stack_inventory(stack)
-	if not inv then return nil end
-	if not inv:room_for_item("main", item) then return nil end
-	
-	inv:add_item("main", item)
-
-	return storagetest.disks.save_stack_inventory(inv, stack)
-end
-
-function storagetest.disks.has_stack(stack, item)
-	local inv = storagetest.disks.get_stack_inventory(stack)
-	if not inv then return nil end
-	return inv:contains_item("main", item, true)
-end
-
-function storagetest.disks.take_stack(stack, item)
-	local inv = storagetest.disks.get_stack_inventory(stack)
-	if not inv then return nil end
-	local item = inv:remove_item("main", item)
-	
-	inv, stack = storagetest.disks.save_stack_inventory(inv, stack)
-
-	return item, stack
-end
+-- Save disks on shutdown
+minetest.register_on_shutdown(function ()
+	storagetest.disks.save_disks_to_file()
+end)
 
 local capacities   = {1000, 8000, 16000, 32000, 64000}
 local descriptions = {"1K Disk", "8K Disk", "16K Disk", "32K Disk", "64K Disk"}
