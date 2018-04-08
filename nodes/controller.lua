@@ -38,6 +38,8 @@ minetest.register_node("holostorage:controller_active", {
 			},
 		}
 	},
+	paramtype = "light",
+	light_source = 8,
 	drop = "holostorage:controller",
 	groups = {
 		cracky = 1,

@@ -291,6 +291,8 @@ minetest.register_node("holostorage:grid_active", {
 		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_grid_active.png",
 	},
 	drop = "holostorage:grid",
+	paramtype = "light",
+	light_source = 8,
 	paramtype2 = "facedir",
 	on_timer = timer,
 	groups = {
@@ -372,6 +374,8 @@ minetest.register_node("holostorage:crafting_grid_active", {
 	},
 	drop = "holostorage:crafting_grid",
 	paramtype2 = "facedir",
+	paramtype = "light",
+	light_source = 8,
 	on_timer = timer,
 	groups = {
 		cracky = 1,
