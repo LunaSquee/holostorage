@@ -4,10 +4,16 @@ holostorage.helpers = {}
 
 function holostorage.helpers.swap_node(pos, noded)
 	local node = minetest.get_node(pos)
+	
+	if type(noded) ~= "table" then
+		noded = {name = noded}
+	end
+
 	if node.name == noded.name then
-		return
+		return false
 	end
 	minetest.swap_node(pos, noded)
+	return true
 end
 
 function holostorage.helpers.grid_refresh(pos, n, controller)

@@ -18,6 +18,9 @@ dofile(holostorage.modpath.."/nodes/grid.lua")
 -- Buses
 dofile(holostorage.modpath.."/nodes/bus.lua")
 
+-- Solderer
+dofile(holostorage.modpath.."/nodes/solderer.lua")
+
 -- Start the network
 holostorage.network.register_abm_controller("holostorage:controller_active")
 holostorage.network.register_abm_nodes()
