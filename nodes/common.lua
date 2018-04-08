@@ -28,3 +28,11 @@ function storagetest.helpers.grid_refresh(pos, n, controller)
 		storagetest.helpers.swap_node(pos, node)
 	end
 end
+
+function storagetest.front(pos, fd)
+	local front = minetest.facedir_to_dir(fd)
+	front.x = front.x * -1 + pos.x
+	front.y = front.y * -1 + pos.y
+	front.z = front.z * -1 + pos.z
+	return front
+end
