@@ -2,7 +2,51 @@
 
 storagetest.grid = {}
 
-function storagetest.grid.get_formspec(scroll_lvl, craft_inv)
+function storagetest.grid.sort(inlist)
+	local typecnt = {}
+	local typekeys = {}
+	for _, st in ipairs(inlist) do
+		if not st:is_empty() then
+			local n = st:get_name()
+			local w = st:get_wear()
+			local m = st:get_metadata()
+			local k = string.format("%s %05d %s", n, w, m)
+			if not typecnt[k] then
+				typecnt[k] = {
+					name = n,
+					wear = w,
+					metadata = m,
+					stack_max = st:get_stack_max(),
+					count = 0,
+				}
+				table.insert(typekeys, k)
+			end
+			typecnt[k].count = typecnt[k].count + st:get_count()
+		end
+	end
+	table.sort(typekeys)
+	local outlist = {}
+	for _, k in ipairs(typekeys) do
+		local tc = typecnt[k]
+		while tc.count > 0 do
+			local c = math.min(tc.count, tc.stack_max)
+			table.insert(outlist, ItemStack({
+				name = tc.name,
+				wear = tc.wear,
+				metadata = tc.metadata,
+				count = c,
+			}))
+			tc.count = tc.count - c
+		end
+	end
+	if #outlist > #inlist then return end
+	while #outlist < #inlist do
+		table.insert(outlist, ItemStack(nil))
+	end
+	return outlist
+end
+
+function storagetest.grid.get_formspec(scroll_lvl, pages, craft_inv)
 	local craft = ""
 	local title = "Grid"
 	local height = 6
@@ -10,9 +54,18 @@ function storagetest.grid.get_formspec(scroll_lvl, craft_inv)
 	if craft_inv then
 		title = "Crafting Grid"
 		height = 3
-		craft = "list[current_player;craft;1.5,4.5;3,3;]"..
-				"image[4.5,5.5;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
-				"list[current_player;craftpreview;5.5,5.5;1,1;]"
+		craft = "list[current_player;craft;1.5,4;3,3;]"..
+				"image[4.5,5;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
+				"list[current_player;craftpreview;5.5,5;1,1;]"
+	end
+
+	local scroll = ""
+	if scroll_lvl < pages then
+		scroll = scroll.."button[7,"..(height-0.5)..";1,1;down;Down]"
+	end
+
+	if scroll_lvl > 0 then
+		scroll = scroll.."button[7,0.5;1,1;up;Up]"
 	end
 
 	return "size[8,12]"..
@@ -20,11 +73,14 @@ function storagetest.grid.get_formspec(scroll_lvl, craft_inv)
 		default.gui_bg_img..
 		default.gui_slots..
 		"label[0,0;"..title.."]"..
+		"field[1.25,7.45;4,1;search;Search..;]"..
+		"field_close_on_enter[search;false]"..
 		"list[context;main;0,7;1,1;]"..
 		"list[context;grid;0,0.5;7,"..height..";]"..
 		"list[current_player;main;0,8;8,1;]"..
 		"list[current_player;main;0,9.2;8,3;8]"..
 		craft..
+		scroll..
 		"listring[context;main]"..
 		"listring[current_player;main]"..
 		default.get_hotbar_bg(0, 8)
@@ -45,9 +101,25 @@ function storagetest.grid.handle_grid(pos, meta, network, inv)
 	local scroll  = meta:get_int("scroll_len") or 0
 	local grid    = inv:get_size("grid")
 
+	-- Sort the items
+	items = storagetest.grid.sort(items)
+
+	-- Search
+	local search = meta:get_string("search")
+	local preserve = {}
+	if search and search ~= "" then
+		for _, v in pairs(items) do
+			if v:get_name():find(search) then
+				preserve[#preserve + 1] = v
+			end
+		end
+	else
+		preserve = items
+	end
+
 	for i = (scroll * 7) + 1, grid + (scroll * 7) do
-		if items[i] then
-			limited_items[#limited_items + 1] = items[i]
+		if preserve[i] then
+			limited_items[#limited_items + 1] = preserve[i]
 		end
 	end 
 
@@ -63,7 +135,33 @@ function storagetest.grid.handle_grid(pos, meta, network, inv)
 		end
 	end
 
+	-- Reset formspec, recalculate scrolls
+	local grid_craft = meta:get_int("craft") == 1
+	local height     = math.floor(#preserve / 8)
+	meta:set_int("scroll_height", height)
+	meta:set_string("formspec", storagetest.grid.get_formspec(scroll, height, grid_craft))
+
 	return refresh
+end
+
+local function on_receive_fields(pos, formname, fields, sender)
+	local meta = minetest.get_meta(pos)
+	if fields["up"] then
+		if meta:get_int("scroll_len") > 0 then
+			meta:set_int("scroll_len", meta:get_int("scroll_len") - 1)
+		end
+	elseif fields["down"] then
+		if meta:get_int("scroll_len") < meta:get_int("scroll_height") then
+			meta:set_int("scroll_len", meta:get_int("scroll_len") + 1)
+		end
+	elseif fields["search"] and fields["key_enter"] then
+		meta:set_string("search", fields["search"])
+		meta:set_int("scroll_len", 0)
+	elseif fields["quit"] then
+		meta:set_string("search", "")
+		meta:set_int("scroll_len", 0)
+	end
+	minetest.get_node_timer(pos):start(0.02)
 end
 
 function storagetest.grid.allow_put(pos, listname, index, stack, player)
@@ -158,13 +256,14 @@ minetest.register_node("storagetest:grid", {
 	on_construct = function (pos)
 		storagetest.network.clear_networks(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("formspec", storagetest.grid.get_formspec(0))
+		meta:set_string("formspec", storagetest.grid.get_formspec(0, 1))
 
 		local inv  = meta:get_inventory()
 		inv:set_size("main", 1)
 		inv:set_size("grid", 7*6)
 
 		meta:set_int("scroll_len", 0)
+		meta:set_int("scroll_height", 6)
 	end,
 	on_rightclick = function (pos, node, clicker, itemstack, pointed_thing)
 		minetest.get_node_timer(pos):start(0.02)
@@ -214,6 +313,7 @@ minetest.register_node("storagetest:grid_active", {
 	storagetest_disabled_name = "storagetest:grid",
 	allow_metadata_inventory_move = storagetest.grid.allow_move_active,
 	allow_metadata_inventory_put = storagetest.grid.allow_put,
+	on_receive_fields = on_receive_fields,
 })
 
 -- Crafting version
@@ -234,13 +334,16 @@ minetest.register_node("storagetest:crafting_grid", {
 	on_construct = function (pos)
 		storagetest.network.clear_networks(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("formspec", storagetest.grid.get_formspec(0, true))
+		meta:set_string("formspec", storagetest.grid.get_formspec(0, 1, true))
 
 		local inv  = meta:get_inventory()
 		inv:set_size("main", 1)
 		inv:set_size("grid", 7*3)
 		
 		meta:set_int("scroll_len", 0)
+		meta:set_int("scroll_height", 3)
+
+		meta:set_int("craft", 1)
 	end,
 	on_rightclick = function (pos, node, clicker, itemstack, pointed_thing)
 		minetest.get_node_timer(pos):start(0.02)
@@ -290,6 +393,7 @@ minetest.register_node("storagetest:crafting_grid_active", {
 	storagetest_disabled_name = "storagetest:crafting_grid",
 	allow_metadata_inventory_move = storagetest.grid.allow_move_active,
 	allow_metadata_inventory_put = storagetest.grid.allow_put,
+	on_receive_fields = on_receive_fields,
 })
 
 storagetest.devices["storagetest:grid"] = true

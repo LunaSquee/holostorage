@@ -323,6 +323,8 @@ function storagetest.network.clear_networks(pos)
 					meta:set_string("st_network", minetest.pos_to_string(c_pos))
 					if get_item_group(name, "storagetest_controller") then
 						table.insert(network.controllers, pos)
+					elseif get_item_group(name, "storagetest_storage") then
+						table.insert(network.st_nodes, pos)
 					elseif storagetest.network.is_network_device(name) then
 						table.insert(network.dv_nodes, pos)
 					end

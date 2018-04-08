@@ -183,11 +183,11 @@ local function register_disk_drive(index)
 		on_timer = timer,
 		groups = groups,
 		on_construct = function (pos)
-			storagetest.network.clear_networks(pos)
 			local meta = minetest.get_meta(pos)
 			meta:set_string("formspec", get_formspec())
 			local inv = meta:get_inventory()
 			inv:set_size("main", 6)
+			storagetest.network.clear_networks(pos)
 		end,
 		on_destruct = storagetest.network.clear_networks,
 
@@ -226,7 +226,7 @@ minetest.register_abm({
 	label = "Storage Disk Synchronization",
 	nodenames = {"group:disk_drive"},
 	neighbors = {"group:storagetest_distributor"},
-	interval = 5,
+	interval = 1,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos)
