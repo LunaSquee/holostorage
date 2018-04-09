@@ -103,6 +103,7 @@ minetest.register_node("holostorage:import_bus", {
 		if front_node.name ~= "air" then
 			local front_meta = minetest.get_meta(front)
 			local front_inv   = front_meta:get_inventory()
+			local front_pos  = minetest.pos_to_string(front)
 			local front_def   = minetest.registered_nodes[front_node.name]
 			if front_inv:get_list("main") then
 				local list = front_inv:get_list("main")
@@ -121,6 +122,8 @@ minetest.register_node("holostorage:import_bus", {
 							can_take = true
 						end
 
+						meta:set_string("infotext", "Importing from Inventory at "..front_pos)
+
 						if can_take then
 							local success, outst = holostorage.network.insert_item(network, copystack)
 							if success then
@@ -132,8 +135,10 @@ minetest.register_node("holostorage:import_bus", {
 					end
 				end
 				front_inv:set_list("main", list)
+				return
 			end
 		end
+		meta:set_string("infotext", "No Inventory Found")
 	end,
 	allow_metadata_inventory_take = inventory_ghost_take,
 	allow_metadata_inventory_put  = inventory_ghost_put
@@ -173,8 +178,9 @@ minetest.register_node("holostorage:export_bus", {
 		local front_node = minetest.get_node(front)
 		if front_node.name ~= "air" then
 			local front_meta = minetest.get_meta(front)
-			local front_inv   = front_meta:get_inventory()
-			local front_def   = minetest.registered_nodes[front_node.name]
+			local front_pos  = minetest.pos_to_string(front)
+			local front_inv  = front_meta:get_inventory()
+			local front_def  = minetest.registered_nodes[front_node.name]
 			if front_inv:get_list("main") then
 				local items = holostorage.network.get_storage_inventories(network)
 				for index, stack in pairs(items) do
@@ -188,7 +194,11 @@ minetest.register_node("holostorage:export_bus", {
 
 						if not front_inv:room_for_item("main", stack) then
 							can_take = false
+							meta:set_string("infotext", "Inventory full")
 						end
+
+
+						meta:set_string("infotext", "Exporting to Inventory at "..front_pos)
 
 						if can_take then
 							local success, gotten = holostorage.network.take_item(network, stack)
@@ -199,8 +209,10 @@ minetest.register_node("holostorage:export_bus", {
 						end
 					end
 				end
+				return
 			end
 		end
+		meta:set_string("infotext", "No Inventory Found")
 	end,
 	allow_metadata_inventory_take = inventory_ghost_take,
 	allow_metadata_inventory_put  = inventory_ghost_put
