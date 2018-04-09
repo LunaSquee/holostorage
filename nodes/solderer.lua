@@ -196,7 +196,7 @@ minetest.register_node("holostorage:solderer", {
 		inv:set_size("src", 3)
 		inv:set_size("dst", 1)
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	selection_box = collision_box,
 	collision_box = collision_box,
 
@@ -221,7 +221,7 @@ minetest.register_node("holostorage:solderer_active", {
 		holostorage_device = 1,
 		not_in_creative_inventory = 1,
 	},
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	selection_box = collision_box,
 	collision_box = collision_box,
 

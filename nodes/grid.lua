@@ -269,7 +269,7 @@ minetest.register_node("holostorage:grid", {
 		minetest.get_node_timer(pos):start(0.02)
 		return itemstack
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	holostorage_run = holostorage.helpers.grid_refresh,
 	allow_metadata_inventory_move = function ()
 		return 0
@@ -310,7 +310,7 @@ minetest.register_node("holostorage:grid_active", {
 		minetest.get_node_timer(pos):start(0.05)
 		return itemstack
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	holostorage_run = holostorage.helpers.grid_refresh,
 	holostorage_disabled_name = "holostorage:grid",
 	allow_metadata_inventory_move = holostorage.grid.allow_move_active,
@@ -351,7 +351,7 @@ minetest.register_node("holostorage:crafting_grid", {
 		minetest.get_node_timer(pos):start(0.02)
 		return itemstack
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	holostorage_run = holostorage.helpers.grid_refresh,
 	allow_metadata_inventory_move = function ()
 		return 0
@@ -392,7 +392,7 @@ minetest.register_node("holostorage:crafting_grid_active", {
 		minetest.get_node_timer(pos):start(0.05)
 		return itemstack
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	holostorage_run = holostorage.helpers.grid_refresh,
 	holostorage_disabled_name = "holostorage:crafting_grid",
 	allow_metadata_inventory_move = holostorage.grid.allow_move_active,

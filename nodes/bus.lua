@@ -65,6 +65,7 @@ local function flip_filter(pos, form, fields, player)
 	end
 end
 
+-- Import Bus
 minetest.register_node("holostorage:import_bus", {
 	description = "Import Bus",
 	tiles = {
@@ -89,7 +90,7 @@ minetest.register_node("holostorage:import_bus", {
 
 		meta:set_int("filter", 0)
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	on_receive_fields = flip_filter,
 	holostorage_run = function (pos, _, controller)
 		local network = minetest.hash_node_position(controller)
@@ -138,6 +139,7 @@ minetest.register_node("holostorage:import_bus", {
 	allow_metadata_inventory_put  = inventory_ghost_put
 })
 
+-- Export Bus
 minetest.register_node("holostorage:export_bus", {
 	description = "Export Bus",
 	tiles = {
@@ -160,7 +162,7 @@ minetest.register_node("holostorage:export_bus", {
 		local inv  = meta:get_inventory()
 		inv:set_size("filter", 8)
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 	holostorage_run = function (pos, _, controller)
 		local network = minetest.hash_node_position(controller)
 		local node    = minetest.get_node(pos)
@@ -204,5 +206,55 @@ minetest.register_node("holostorage:export_bus", {
 	allow_metadata_inventory_put  = inventory_ghost_put
 })
 
+-- External Storage Bus
+
+-- Export Bus
+minetest.register_node("holostorage:external_storage_bus", {
+	description = "External Storage Bus",
+	tiles = {
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_machine_block.png",
+		"holostorage_machine_block.png", "holostorage_machine_block.png", "holostorage_external.png",
+	},
+	paramtype2 = "facedir",
+	is_ground_content = false,
+	groups = {
+		holostorage_distributor = 1,
+		holostorage_device = 1,
+		holostorage_storage = 1,
+		cracky = 2,
+		oddly_breakable_by_hand = 2
+	},
+	on_construct = function (pos)
+		holostorage.network.clear_networks(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("inv_pos", "")
+		meta:set_string("inv_name", "")
+	end,
+	after_dig_node = holostorage.network.clear_networks,
+	holostorage_run = function (pos, _, controller)
+		local node    = minetest.get_node(pos)
+		local meta    = minetest.get_meta(pos)
+		local front   = holostorage.front(pos, node.param2)
+		
+		local front_node = minetest.get_node(front)
+		if front_node.name ~= "air" then
+			local front_meta = minetest.get_meta(front)
+			local front_inv   = front_meta:get_inventory()
+			if front_inv:get_list("main") then
+				local pos_str = minetest.pos_to_string(front)
+				meta:set_string("infotext", "Serving Inventory at "..pos_str)
+				meta:set_string("inv_pos", pos_str)
+				meta:set_string("inv_name", "main")
+			end
+			return
+		end
+		meta:set_string("infotext", "No Inventory Found")
+		meta:set_string("inv_pos", "")
+	end,
+	allow_metadata_inventory_take = inventory_ghost_take,
+	allow_metadata_inventory_put  = inventory_ghost_put
+})
+
 holostorage.devices["holostorage:import_bus"] = true
 holostorage.devices["holostorage:export_bus"] = true
+holostorage.devices["holostorage:external_storage_bus"] = true

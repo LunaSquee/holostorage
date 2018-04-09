@@ -43,5 +43,5 @@ minetest.register_node("holostorage:cable", {
 	on_construct = function (pos)
 		holostorage.network.clear_networks(pos)
 	end,
-	on_destruct = holostorage.network.clear_networks,
+	after_dig_node = holostorage.network.clear_networks,
 })

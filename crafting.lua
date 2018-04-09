@@ -136,6 +136,14 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
+	output = "holostorage:external_storage_bus",
+	recipe = {
+		{"holostorage:import_bus", "holostorage:export_bus"},
+		{"default:mese_crystal",   "default:chest"}
+	}
+})
+
+minetest.register_craft({
 	output = "holostorage:controller",
 	recipe = {
 		{"default:mese_crystal", "holostorage:quartz_iron",   "default:mese_crystal"},

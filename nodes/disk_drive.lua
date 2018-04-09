@@ -68,101 +68,6 @@ local function sort_by_stack_name( ... )
 	-- body
 end
 
-function holostorage.stack_list(pos)
-	local invs = holostorage.get_all_inventories(pos)
-	if not invs then return {} end
-	local tabl = {}
-
-	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
-		if invref then
-			local stacks = invref:get_list("main")
-			for _,stack in pairs(stacks) do
-				if not stack:is_empty() then
-					table.insert(tabl, stack)
-				end
-			end
-		end
-	end
-
-	--table.sort( tabl, sort_by_stack_name )
-	return tabl
-end
-
-function holostorage.insert_stack(pos, stack)
-	local invs = holostorage.get_all_inventories(pos)
-	if not invs then return {} end
-	local tabl = {}
-	local success = false
-	local leftover
-
-	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
-		if invref then
-			if invref:room_for_item("main", stack) then
-				leftover = invref:add_item("main", stack)
-				success = true
-				break
-			end
-		end
-	end
-
-	return success, leftover
-end
-
-function holostorage.take_stack(pos, stack)
-	local invs = holostorage.get_all_inventories(pos)
-	if not invs then return {} end
-	local tabl = {}
-	local stack_ret
-	local success = false
-
-	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
-		if invref then
-			local list = invref:get_list("main")
-			for i, stacki in pairs(list) do
-				if stacki:get_name() == stack:get_name() and stacki:get_wear() == stack:get_wear() then
-					success = true
-					if stack:get_count() >= stacki:get_count() then
-						stack:set_count(stacki:get_count())
-						stacki:clear()
-					else
-						stacki:set_count(stacki:get_count() - stack:get_count())
-					end
-					stack_ret = stack
-					list[i] = stacki
-					break
-				end
-			end
-			invref:set_list("main", list)
-		end
-	end
-
-	return success, stack_ret
-end
-
-function holostorage.get_all_inventories(pos)
-	local node = minetest.get_node(pos)
-	if minetest.get_item_group(node.name, "disk_drive") == 0 then return nil end
-	local meta = minetest.get_meta(pos)
-	local inv  = meta:get_inventory()
-	
-	local drives      = inv:get_list("main")
-	local inventories = {}
-	for i, v in pairs(drives) do
-		if not v:is_empty() then
-			local meta = v:get_meta()
-			local tag  = meta:get_string("storage_tag")
-			if tag and tag ~= "" then
-				inventories[#inventories + 1] = tag
-			end
-		end
-	end
-
-	return inventories
-end
-
 local function register_disk_drive(index)
 	local groups = {
 		cracky = 1,
@@ -196,7 +101,7 @@ local function register_disk_drive(index)
 			inv:set_size("main", 6)
 			holostorage.network.clear_networks(pos)
 		end,
-		on_destruct = holostorage.network.clear_networks,
+		after_dig_node = holostorage.network.clear_networks,
 
 		allow_metadata_inventory_put = allow_metadata_inventory_put,
 		allow_metadata_inventory_take = allow_metadata_inventory_take,
