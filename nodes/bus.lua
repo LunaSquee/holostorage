@@ -197,7 +197,6 @@ minetest.register_node("holostorage:export_bus", {
 							meta:set_string("infotext", "Inventory full")
 						end
 
-
 						meta:set_string("infotext", "Exporting to Inventory at "..front_pos)
 
 						if can_take then

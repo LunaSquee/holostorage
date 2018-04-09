@@ -111,7 +111,7 @@ local function register_disk_drive(index)
 			minetest.get_node_timer(pos):start(0.02)
 		end,
 		on_metadata_inventory_put = function(pos, listname, index, stack, player)
-			stack = holostorage.disks.ensure_disk_inventory(stack, minetest.pos_to_string(pos))
+			stack = holostorage.server_inventory.ensure_disk_inventory(stack, minetest.pos_to_string(pos))
 
 			local meta  = minetest.get_meta(pos)
 			local inv   = meta:get_inventory()
@@ -149,9 +149,9 @@ minetest.register_abm({
 			local meta = stack:get_meta()
 			local tag  = meta:get_string("storage_tag")
 			if tag and tag ~= "" then
-				if not holostorage.disks.memcache[tag] then
+				if not holostorage.server_inventory.cache[tag] then
 					print("loading drive",tag)
-					holostorage.disks.load_disk_from_file(stack, tag)
+					holostorage.server_inventory.load_disk_from_file(stack, tag)
 				end
 			end
 		end

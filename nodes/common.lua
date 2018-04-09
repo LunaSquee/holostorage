@@ -53,7 +53,7 @@ function holostorage.stack_list(pos)
 	local tabl = {}
 
 	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
+		local invref = holostorage.server_inventory.cache[diskptr]
 		local inv_n  = "main"
 		local inv_p
 		if diskptr:find("chest/") then
@@ -86,7 +86,7 @@ function holostorage.insert_stack(pos, stack)
 	local leftover
 
 	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
+		local invref = holostorage.server_inventory.cache[diskptr]
 		local inv_n  = "main"
 		local inv_p
 		if diskptr:find("chest/") then
@@ -116,7 +116,7 @@ function holostorage.take_stack(pos, stack)
 	local success = false
 
 	for _,diskptr in pairs(invs) do
-		local invref = holostorage.disks.memcache[diskptr]
+		local invref = holostorage.server_inventory.cache[diskptr]
 		local inv_n  = "main"
 		local inv_p
 		if diskptr:find("chest/") then

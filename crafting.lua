@@ -66,7 +66,7 @@ if quartz then
 	minetest.register_craft({
 		type = "cooking",
 		output = "holostorage:silicon",
-		recipe = "holostorage:quartz_iron"
+		recipe = "quartz:quartz_crystal"
 	})
 else
 	minetest.register_craft({

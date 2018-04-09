@@ -7,6 +7,9 @@ holostorage.modpath = modpath
 
 holostorage.devices = {}
 
+-- Memory Storage
+dofile(modpath.."/masscache.lua")
+
 -- Network
 dofile(modpath.."/network.lua")
 
