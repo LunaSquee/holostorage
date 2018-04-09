@@ -231,6 +231,11 @@ minetest.register_node("holostorage:external_storage_bus", {
 		meta:set_string("inv_name", "")
 	end,
 	after_dig_node = holostorage.network.clear_networks,
+	on_destruct = function (pos)
+		local node    = minetest.get_node(pos)
+		local front   = holostorage.front(pos, node.param2)
+		minetest.forceload_free_block(front)
+	end,
 	holostorage_run = function (pos, _, controller)
 		local node    = minetest.get_node(pos)
 		local meta    = minetest.get_meta(pos)
@@ -242,6 +247,7 @@ minetest.register_node("holostorage:external_storage_bus", {
 			local front_inv   = front_meta:get_inventory()
 			if front_inv:get_list("main") then
 				local pos_str = minetest.pos_to_string(front)
+				minetest.forceload_block(front)
 				meta:set_string("infotext", "Serving Inventory at "..pos_str)
 				meta:set_string("inv_pos", pos_str)
 				meta:set_string("inv_name", "main")

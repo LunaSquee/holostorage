@@ -36,7 +36,11 @@ function holostorage.helpers.grid_refresh(pos, n, controller)
 end
 
 function holostorage.front(pos, fd)
-	local front = minetest.facedir_to_dir(fd)
+	local back = minetest.facedir_to_dir(fd)
+	local front = {}
+	for i, v in pairs(back) do
+		front[i] = v
+	end
 	front.x = front.x * -1 + pos.x
 	front.y = front.y * -1 + pos.y
 	front.z = front.z * -1 + pos.z
