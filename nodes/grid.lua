@@ -60,12 +60,16 @@ function holostorage.grid.get_formspec(scroll_lvl, pages, craft_inv)
 	end
 
 	local scroll = ""
-	if scroll_lvl < pages then
-		scroll = scroll.."button[7,"..(height-0.5)..";1,1;down;Down]"
-	end
+	if pages ~= 0 then
+		if scroll_lvl < pages then
+			scroll = scroll.."button[7,"..(height-0.5)..";1,1;down;Down]"
+			scroll = scroll.."button[7,"..(height-1.5)..";1,1;bot;Bottom]"
+		end
 
-	if scroll_lvl > 0 then
-		scroll = scroll.."button[7,0.5;1,1;up;Up]"
+		if scroll_lvl > 0 then
+			scroll = scroll.."button[7,0.5;1,1;up;Up]"
+			scroll = scroll.."button[7,1.5;1,1;top;Top]"
+		end
 	end
 
 	return "size[8,12]"..
@@ -150,6 +154,10 @@ local function on_receive_fields(pos, formname, fields, sender)
 		if meta:get_int("scroll_len") > 0 then
 			meta:set_int("scroll_len", meta:get_int("scroll_len") - 1)
 		end
+	elseif fields["top"] then
+		meta:set_int("scroll_len", 0)
+	elseif fields["bot"] then
+		meta:set_int("scroll_len", meta:get_int("scroll_height"))
 	elseif fields["down"] then
 		if meta:get_int("scroll_len") < meta:get_int("scroll_height") then
 			meta:set_int("scroll_len", meta:get_int("scroll_len") + 1)
