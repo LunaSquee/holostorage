@@ -248,6 +248,9 @@ function holostorage.network.register_abm_controller(name)
 					end
 					if nodedef and nodedef.holostorage_run then
 						nodedef.holostorage_run(pos2, node2, pos)
+					elseif nodedef then
+						local imeta = minetest.get_meta(pos2)
+						imeta:set_string("infotext", ("%s Active"):format(nodedef.description))
 					end
 				end
 			end

@@ -132,12 +132,10 @@ local function run_solderer(pos, _, controller)
 	while true do
 		local result = holostorage.solderer.get_recipe(inv:get_list("src"))
 		if not result then
-			local swap = holostorage.helpers.swap_node(pos, machine_node)
-			if swap then
-				meta:set_string("infotext", "Solderer Idle")
-				meta:set_string("formspec", get_formspec())
-				meta:set_int("src_time", 0)
-			end
+			holostorage.helpers.swap_node(pos, machine_node)
+			meta:set_string("infotext", "Solderer Idle")
+			meta:set_string("formspec", get_formspec())
+			meta:set_int("src_time", 0)
 			return
 		end
 		meta:set_int("src_time", meta:get_int("src_time") + round(machine_speed * 10))
