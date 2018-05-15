@@ -105,12 +105,10 @@ holostorage.server_inventory = {
 		function system:add_item(abs, stack)
 			if not stack then stack = abs end
 			local leftover = nil
-			for i,stc in pairs(system.stacks) do
-				if not stc or stc:is_empty() then
-					system[i] = stack
-					break
-				end
+			local first_empty_index = system:first_empty_index()
+			local added = false
 
+			for i, stc in pairs(system.stacks) do
 				if stc:get_name() == stack:get_name() and stc:get_meta() == stack:get_meta() then
 					if stc:get_count() == stack:get_stack_max() then
 						break
@@ -120,11 +118,14 @@ holostorage.server_inventory = {
 					if leftover and not leftover:is_empty() and system:room_for_item(leftover) then
 						leftover = system:add_item(leftover)
 					end
-				else
+
+					added = true
 					break
 				end
 			end
 			
+			if added then return leftover end
+
 			if not leftover then
 				system.stacks[system:first_empty_index()] = stack
 				leftover = ItemStack(nil)
